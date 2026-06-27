@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Killfeed Status</title>
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+
+    <!-- Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- ============ ON-SCREEN KILLFEED (HUD overlay, no focus) ============ -->
+    <div id="killfeed" class="killfeed killfeed--top-right"></div>
+
+    <div id="app" class="app hidden">
+        <div class="window">
+
+            <!-- ============ HEADER ============ -->
+            <header class="topbar">
+                <div class="brand">
+                    <div class="brand-logo"><i class="fa-solid fa-crosshairs"></i></div>
+                    <div class="brand-text">
+                        <span class="brand-title">Killfeed</span>
+                        <span class="brand-sub">Admin Console</span>
+                    </div>
+                </div>
+
+                <div class="topbar-tools">
+                    <label class="search-wrap" for="search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="search" type="text"
+                               placeholder="Search player, Discord, license or weapon" />
+                        <kbd class="search-kbd">Esc</kbd>
+                    </label>
+
+                    <div class="filter-wrap">
+                        <i class="fa-solid fa-sliders"></i>
+                        <select id="filter" aria-label="Filter kills by weapon">
+                            <option value="all">All weapons</option>
+                            <option value="pistol">Pistol</option>
+                            <option value="smg">SMG</option>
+                            <option value="shotgun">Shotgun</option>
+                            <option value="ar">Assault Rifle</option>
+                            <option value="sniper">Sniper</option>
+                            <option value="explosion">Explosion</option>
+                            <option value="vehicle">Vehicle</option>
+                            <option value="suicide">Suicide</option>
+                            <option value="knife">Knife</option>
+                            <option value="melee">Melee</option>
+                            <option value="fire">Fire</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down filter-caret"></i>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="settings-anchor">
+                        <button id="settings-btn" class="icon-btn" title="Killfeed settings"
+                                aria-haspopup="true" aria-expanded="false">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+
+                        <!-- ===== Killfeed settings popover ===== -->
+                        <div id="settings-menu" class="settings-menu hidden" role="menu">
+                            <div class="settings-head">
+                                <i class="fa-solid fa-sliders"></i> Killfeed Settings
+                            </div>
+
+                            <div class="setting-row">
+                                <div class="setting-label">
+                                    <span>On-screen killfeed</span>
+                                    <small>Show kills as a HUD overlay</small>
+                                </div>
+                                <button id="kf-toggle" class="switch is-on" role="switch" aria-checked="true">
+                                    <span class="switch-knob"></span>
+                                </button>
+                            </div>
+
+                            <div class="setting-divider"></div>
+
+                            <div class="setting-row col">
+                                <div class="setting-label">
+                                    <span>Position</span>
+                                    <small>Pick a screen corner</small>
+                                </div>
+                                <div class="pos-grid" id="kf-pos" role="radiogroup" aria-label="Killfeed position">
+                                    <button class="pos-cell" data-pos="top-left"     role="radio" aria-label="Top left"><span></span></button>
+                                    <button class="pos-cell" data-pos="top-right"    role="radio" aria-label="Top right"><span></span></button>
+                                    <button class="pos-cell" data-pos="bottom-left"  role="radio" aria-label="Bottom left"><span></span></button>
+                                    <button class="pos-cell" data-pos="bottom-right" role="radio" aria-label="Bottom right"><span></span></button>
+                                </div>
+                            </div>
+
+                            <button id="kf-test" class="settings-test">
+                                <i class="fa-solid fa-eye"></i> Preview entry
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="close" class="close-btn" title="Close (Esc)" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ============ BODY ============ -->
+            <div class="body">
+
+                <!-- LEFT: KILLFEED LIST -->
+                <aside class="left">
+                    <div class="left-head">
+                        <span class="left-head-title">
+                            <i class="fa-solid fa-list-ul"></i> Recent Kills
+                        </span>
+                        <span id="kill-count" class="pill">0</span>
+                    </div>
+
+                    <div id="feed" class="feed">
+                        <!-- kill cards injected here -->
+                    </div>
+
+                    <div id="feed-empty" class="empty-state">
+                        <div class="empty-icon"><i class="fa-solid fa-wind"></i></div>
+                        <p>No kills recorded</p>
+                        <span>New events will stream in here live.</span>
+                    </div>
+                </aside>
+
+                <!-- RIGHT: PROFILE + DETAILS -->
+                <main class="right">
+                    <div id="profile-empty" class="empty-state">
+                        <div class="empty-icon"><i class="fa-solid fa-arrow-pointer"></i></div>
+                        <p>Select a kill</p>
+                        <span>Pick an entry on the left to inspect the player profile.</span>
+                    </div>
+
+                    <div id="profile" class="profile hidden">
+                        <!-- Banner + avatar -->
+                        <div class="profile-banner" id="profile-banner">
+                            <span class="profile-status-dot" id="status-dot"></span>
+                        </div>
+
+                        <div class="profile-head">
+                            <div class="profile-avatar-wrap">
+                                <img id="profile-avatar" class="profile-avatar" src="" alt="avatar" />
+                            </div>
+                            <div class="profile-identity">
+                                <div class="profile-names">
+                                    <h2 id="p-display">—</h2>
+                                    <span id="p-username" class="muted">—</span>
+                                </div>
+                                <div class="profile-badges" id="p-badges"></div>
+                            </div>
+                        </div>
+
+                        <div class="profile-scroll">
+                            <!-- Statistics -->
+                            <div class="section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-chart-simple"></i> Statistics
+                                </div>
+                                <div class="stats-grid" id="stats-grid"></div>
+                            </div>
+
+                            <!-- Identity / live info -->
+                            <div class="section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-id-card"></i> Player Info
+                                </div>
+                                <div class="info-grid" id="info-grid"></div>
+                            </div>
+
+                            <!-- Kill details (killer vs victim) -->
+                            <div class="section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-crosshairs"></i> Kill Details
+                                    <span class="section-hint">Click a side to inspect</span>
+                                </div>
+                                <div class="duel" id="duel"></div>
+                            </div>
+
+                            <!-- Kill timeline -->
+                            <div class="section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-timeline"></i> Timeline
+                                </div>
+                                <div class="timeline" id="timeline"></div>
+                            </div>
+
+                            <!-- Admin actions -->
+                            <div class="section">
+                                <div class="section-title">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> Admin Actions
+                                </div>
+                                <div class="actions" id="actions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
